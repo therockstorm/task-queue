@@ -1,0 +1,50 @@
+{
+  "name": "task-queue",
+  "description": "Reliable task queue utilizing Redis's RPOPLPUSH.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "homepage": "https://github.com/therockstorm/task-queue#readme",
+  "bugs": {
+    "url": "https://github.com/therockstorm/task-queue/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/therockstorm/task-queue.git"
+  },
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint src test",
+    "prepare": "tsdx build"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "semi": false
+  },
+  "module": "dist/task-queue.esm.js",
+  "devDependencies": {
+    "@types/ioredis": "^4.14.9",
+    "@types/jest": "^25.1.4",
+    "husky": "^4.2.3",
+    "tsdx": "^0.13.0",
+    "tslib": "^1.11.1",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "ioredis": "^4.16.0"
+  }
+}
