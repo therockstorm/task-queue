@@ -1,0 +1,6 @@
+version: "2.4"
+
+services:
+  task-queue:
+    image: redis:latest
+    ports: [6379:6379]

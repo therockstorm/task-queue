@@ -1,16 +1,11 @@
 import Redis from "ioredis"
-import { Queue, Task, TaskQueue, WorkerQueue } from "."
+import { Queue, Task, TaskQueue, WorkerQueue } from "../types"
 
 const redis = new Redis({
   maxRetriesPerRequest: 20 // ioredis default
 })
 
-export const toString = (task: Task) => JSON.stringify(task)
-
-export const logQueue = async (q: Queue) =>
-  console.log(`${q.name}=${await redis.lrange(q.name, 0, -1)}`)
-
-export const addToTaskQueue = async (taskQ: TaskQueue, tasks: Task[]) =>
+export const addTasks = async (taskQ: TaskQueue, tasks: Task[]) =>
   redis.lpush(taskQ.name, tasks.map(toString))
 
 export const nextTask = async (
@@ -18,10 +13,10 @@ export const nextTask = async (
   workerQ: WorkerQueue
 ): Promise<Task> => JSON.parse(await redis.rpoplpush(taskQ.name, workerQ.name))
 
-export const ackQueue = async (workerQ: WorkerQueue, task: Task) =>
+export const ackWorker = async (workerQ: WorkerQueue, task: Task) =>
   redis.lrem(workerQ.name, -1, toString(task))
 
-export const requeueTaskAndAckWorkerQueue = async (
+export const requeueTaskAndAckWorker = async (
   taskQ: TaskQueue,
   taskDlq: TaskQueue,
   workerQ: WorkerQueue,
@@ -44,3 +39,10 @@ export const requeueTaskAndAckWorkerQueue = async (
       .exec()
   }
 }
+
+export const toString = (task: Task) => JSON.stringify(task)
+
+export const logQueues = async (qs: Queue[]) => Promise.all(qs.map(logQueue))
+
+const logQueue = async (q: Queue) =>
+  console.log(`${q.name}=${await redis.lrange(q.name, 0, -1)}`)
