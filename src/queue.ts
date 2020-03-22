@@ -5,6 +5,14 @@ const redis = new Redis({
   maxRetriesPerRequest: 20 // ioredis default
 })
 
+export const workersWithTasks = async (prefix: string) =>
+  new Promise(resolve => {
+    const keys = new Set()
+    const stream = redis.scanStream({ match: `${prefix}*` })
+    stream.on("data", res => res.forEach((r: string) => keys.add(r)))
+    stream.on("end", () => resolve(Array.from(keys)))
+  })
+
 export const addTasks = async (taskQ: TaskQueue, tasks: Task[]) =>
   redis.lpush(taskQ.name, tasks.map(toString))
 
