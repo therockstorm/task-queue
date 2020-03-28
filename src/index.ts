@@ -1,3 +1,5 @@
+import { v4 } from "uuid"
+import { event } from "cloudevents-sdk/v1"
 import {
   ackWorker,
   addTasks,
@@ -14,7 +16,7 @@ const TaskQ: TaskQueue = { type: "task", name: "task" }
 const TaskDlq: TaskQueue = { type: "task", name: "taskDlq" }
 const Worker1Q: WorkerQueue = { type: "worker", name: `${WorkerPrefix}1` }
 const Worker2Q: WorkerQueue = { type: "worker", name: `${WorkerPrefix}2` }
-const MaxTries = 3
+const MaxAttempts = 3
 
 const main = async () => {
   // A worker could die and not recover. For non-critical tasks, you could EXPIRE the worker queue.
@@ -26,7 +28,16 @@ const main = async () => {
     TaskQ,
     Array(5)
       .fill(0)
-      .map((_, i) => ({ evt: i.toString(), try: 1 }))
+      .map((_, i) => ({
+        attempt: 1,
+        evt: event()
+          .id(v4())
+          .source("urn:task-queue/main")
+          .time(new Date())
+          .type("dev.rocky.task")
+          .dataContentType("application/json")
+          .data(JSON.stringify({ name: i.toString() }))
+      }))
   )
 
   // If workers are running as separate instances on AWS, you could auto-scale them with
@@ -42,13 +53,14 @@ const main = async () => {
 const requeueTaskOnError = async (workerQ: WorkerQueue) => {
   let task = await nextTask(TaskQ, workerQ)
   while (task !== null) {
+    const taskStr = toString(task.evt.getData())
     try {
-      console.log(`${workerQ.name} handled ${toString(task)}`)
       randomlyThrowError()
+      console.log(`${workerQ.name} handled ${taskStr}`)
       await ackWorker(workerQ, task)
     } catch (err) {
-      console.log(`${workerQ.name} ${toString(task)}, err=${err.message}`)
-      await requeueTaskAndAckWorker(TaskQ, TaskDlq, workerQ, task, MaxTries)
+      console.log(`${workerQ.name} error ${taskStr}`)
+      await requeueTaskAndAckWorker(TaskQ, TaskDlq, workerQ, task, MaxAttempts)
     }
     task = await nextTask(TaskQ, workerQ)
   }

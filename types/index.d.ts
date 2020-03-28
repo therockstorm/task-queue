@@ -1,6 +1,8 @@
+import { Cloudevent } from "cloudevents-sdk/v1"
+
 export interface Queue {
-  type: "task" | "worker"
   name: string
+  type: "task" | "worker"
 }
 
 export interface TaskQueue extends Queue {
@@ -12,6 +14,6 @@ export interface WorkerQueue extends Queue {
 }
 
 export interface Task {
-  evt: string
-  try: number
+  attempt: number
+  evt: Cloudevent
 }
